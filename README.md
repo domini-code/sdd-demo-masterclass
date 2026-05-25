@@ -28,9 +28,10 @@ npm install
 cp .env.example .env.local
 # Edita .env.local con tus credenciales de Supabase
 
-# 4. Aplicar la migración (si es un proyecto Supabase nuevo)
-# supabase db push
-# La tabla bookmarks ya está incluida en supabase/migrations/
+# 4. Aplicar la migración
+supabase db push
+# O si prefieres aplicarla directamente contra tu proyecto remoto:
+# supabase db push --db-url "postgresql://..."
 
 # 5. Arrancar
 npm run dev
@@ -62,6 +63,26 @@ Añadir sistema de bookmarks para artículos
 ```
 
 La tabla `bookmarks` ya está en `supabase/migrations/` — representa el estado "ya aplicado" para el demo.
+
+## Migraciones
+
+Las migraciones están en `supabase/migrations/`. Para aplicarlas necesitas tener la [Supabase CLI](https://supabase.com/docs/guides/cli) instalada y haber hecho login.
+
+```bash
+# Aplicar todas las migraciones pendientes al proyecto remoto
+supabase db push
+
+# Enlazar el proyecto local con tu proyecto de Supabase (primera vez)
+supabase link --project-ref <tu-project-ref>
+
+# Ver el estado de las migraciones
+supabase migration list
+
+# Crear una nueva migración
+supabase migration new <nombre>
+```
+
+> La tabla `bookmarks` ya está incluida — si usas un proyecto Supabase nuevo, solo ejecuta `supabase db push` tras enlazarlo.
 
 ## Comandos
 
