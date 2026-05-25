@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { Providers } from "./providers"
+import { AuthNav } from "@/components/AuthNav"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <nav className="flex items-center gap-6 text-sm text-muted-foreground">
                 <a href="/blog" className="hover:text-foreground transition-colors">Blog</a>
                 <a href="/bookmarks" className="hover:text-foreground transition-colors">Guardados</a>
+                <AuthNav />
               </nav>
             </div>
           </header>

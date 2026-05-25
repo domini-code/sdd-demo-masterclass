@@ -22,12 +22,11 @@ export function useBookmarks() {
 
   const isBookmarked = (postId: string) => bookmarks.includes(postId)
 
-  const mutation = useMutation<void, Error, string>({
-    mutationFn: async (postId: string) => {
-      const current = queryClient.getQueryData<BookmarksData>(["bookmarks"])
-      const nowBookmarked = current?.bookmarks.includes(postId) ?? false
+  type MutationVars = { postId: string; shouldRemove: boolean }
 
-      if (nowBookmarked) {
+  const mutation = useMutation<void, Error, MutationVars>({
+    mutationFn: async ({ postId, shouldRemove }) => {
+      if (shouldRemove) {
         const res = await fetch(`/api/bookmarks?post_id=${postId}`, { method: "DELETE" })
         if (!res.ok) throw new Error("Error al eliminar bookmark")
       } else {
@@ -39,20 +38,19 @@ export function useBookmarks() {
         if (!res.ok && res.status !== 409) throw new Error("Error al guardar bookmark")
       }
     },
-    onMutate: async (postId: string) => {
+    onMutate: async ({ postId, shouldRemove }) => {
       await queryClient.cancelQueries({ queryKey: ["bookmarks"] })
       const previous = queryClient.getQueryData<BookmarksData>(["bookmarks"])
-      const isCurrentlyBookmarked = previous?.bookmarks.includes(postId) ?? false
 
       queryClient.setQueryData<BookmarksData>(["bookmarks"], (old) => ({
-        bookmarks: isCurrentlyBookmarked
+        bookmarks: shouldRemove
           ? (old?.bookmarks ?? []).filter((id) => id !== postId)
           : [...(old?.bookmarks ?? []), postId],
       }))
 
       return { previous }
     },
-    onError: (_err, _postId, context) => {
+    onError: (_err, _vars, context) => {
       const ctx = context as { previous?: BookmarksData } | undefined
       if (ctx?.previous) {
         queryClient.setQueryData(["bookmarks"], ctx.previous)
@@ -63,10 +61,16 @@ export function useBookmarks() {
     },
   })
 
+  const toggleBookmark = (postId: string) => {
+    const current = queryClient.getQueryData<BookmarksData>(["bookmarks"])
+    const shouldRemove = current?.bookmarks.includes(postId) ?? false
+    mutation.mutate({ postId, shouldRemove })
+  }
+
   return {
     bookmarks,
     isBookmarked,
-    toggleBookmark: mutation.mutate,
+    toggleBookmark,
     isPending: mutation.isPending,
   }
 }

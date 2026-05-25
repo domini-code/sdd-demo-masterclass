@@ -41,14 +41,13 @@ export async function DELETE(request: Request) {
   const post_id = searchParams.get("post_id")
   if (!post_id) return Response.json({ error: "post_id requerido" }, { status: 400 })
 
-  const { error, count } = await supabase
+  const { error } = await supabase
     .from("bookmarks")
     .delete()
     .eq("user_id", user.id)
     .eq("post_id", post_id)
 
   if (error) return Response.json({ error: error.message }, { status: 500 })
-  if (!count) return Response.json({ error: "Bookmark no encontrado" }, { status: 404 })
 
   return Response.json({ success: true })
 }
