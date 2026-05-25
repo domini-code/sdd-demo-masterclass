@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import Image from "next/image"
 import { getPostBySlug, getPosts } from "@/lib/api"
+import { BookmarkButton } from "./_components/BookmarkButton"
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -26,12 +27,15 @@ export default async function PostPage({ params }: Props) {
   return (
     <article className="mx-auto max-w-2xl">
       <header className="mb-8">
-        <div className="mb-4 flex flex-wrap gap-2">
-          {post.tags.map((tag) => (
-            <span key={tag} className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-              {tag}
-            </span>
-          ))}
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex flex-wrap gap-2">
+            {post.tags.map((tag) => (
+              <span key={tag} className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                {tag}
+              </span>
+            ))}
+          </div>
+          <BookmarkButton postId={post.id} />
         </div>
         <h1 className="mb-4 text-3xl font-bold leading-tight text-foreground">
           {post.title}
