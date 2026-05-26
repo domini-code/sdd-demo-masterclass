@@ -1,0 +1,196 @@
+name: SDD Feature Agent
+
+# Flujo agéntico end-to-end con metodología SDD (human-in-the-loop):
+# Abres el issue describiendo el feature y NO pasa nada.
+# Cuando le añades la etiqueta "e2e", el agente arranca:
+# spec → implementa → prueba con Playwright (graba video) → abre PR → reporta.
+#
+# El disparador por etiqueta no choca con claude.yml (que no escucha `labeled`).
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  sdd-agent:
+    if: github.event.label.name == 'e2e'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # crear rama y commitear
+      pull-requests: write   # abrir el PR y comentar
+      issues: write          # responder en el issue
+      id-token: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Claude Code (spec + implement + test + open PR)
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          additional_permissions: |
+            actions: read
+          claude_args: '--allowed-tools "Bash,Read,Write,Edit,Glob,Grep"'
+          prompt: |
+            Un humano te asignó este trabajo poniéndole la etiqueta "e2e" al issue
+            #${{ github.event.issue.number }} ("${{ github.event.issue.title }}").
+
+            El cuerpo del issue describe un feature a implementar. Ejecuta TODO este ciclo
+            sin pedir confirmación, ya que corres en CI sin un humano disponible.
+
+            Este proyecto usa npm (no pnpm). Stack: Next.js 15 App Router + React 19 +
+            TypeScript strict + Tailwind CSS v4 + Supabase Auth + React Query v5.
+
+            1. SPEC (metodología SDD)
+               - Lee los specs existentes en specs/ para entender la convención.
+               - Si no existe spec para este feature, crea specs/<feature-name>/spec.md,
+                 plan.md y tasks.md siguiendo la estructura de los existentes.
+
+            2. IMPLEMENTAR
+               - Crea una rama nueva: feat/issue-${{ github.event.issue.number }}.
+               - Respeta los patrones del proyecto (CLAUDE.md):
+                 · Auth server-side via createServerClient en API routes.
+                 · Estado cliente via React Query (useQuery + useMutation).
+                 · Componentes UI de app/components/ui/ — no importar Radix directo.
+                 · "use client" solo donde hay interactividad o hooks de browser.
+               - Implementa el feature descrito en el issue.
+
+            3. PROBAR (E2E) — DEJAR EN VERDE
+               - Si @playwright/test no está en devDependencies del package.json,
+                 añádelo con: npm install -D @playwright/test
+               - Si no existe playwright.config.ts en la raíz, créalo con:
+                 · testDir: './e2e'
+                 · outputDir: './e2e/.results'
+                 · reporter: [['html', { outputFolder: 'e2e/.report' }]]
+                 · use: { baseURL: 'http://localhost:3000', video: 'on' }
+                 · webServer: { command: 'npm run dev', url: 'http://localhost:3000', reuseExistingServer: !process.env.CI }
+               - Si no existe el script "test:e2e" en package.json, añádelo:
+                 "test:e2e": "playwright test"
+               - Añade un nuevo spec en e2e/ que ejercite el GOLDEN PATH del feature
+                 (navega, interactúa, y haz asserts visibles).
+               - Corre `npm run test:e2e`. Si falla, ARREGLA el código o el test hasta
+                 que pase.
+               - Corre también `npm run lint` y `npm test` (unit) y deja todo en verde.
+               - NO te preocupes por grabar o subir el video: un step posterior del
+                 workflow re-corre `npm run test:e2e` y graba el .webm de forma confiable.
+                 Tu única responsabilidad es que los specs estén en VERDE.
+
+            4. ABRIR PR
+               - Commitea tu trabajo y abre un PR contra main con `gh pr create`.
+               - El cuerpo del PR debe cerrar el issue con "Closes #${{ github.event.issue.number }}".
+
+            5. REPORTAR en el PR (comentario con `gh pr comment`)
+               Reporta SOLO lo que hiciste, sin inventar resultados de tests:
+                 - Qué spec SDD creaste o actualizaste en specs/.
+                 - Qué feature se implementó y qué archivos cambiaron.
+                 - Qué specs e2e añadiste y qué golden path ejercitan.
+                 - Cualquier limitación o supuesto que hayas tomado.
+               NO afirmes cuántos tests pasaron ni menciones el video: un step
+               posterior del workflow publica el resultado real de los tests y el
+               link al artifact del video en un comentario aparte.
+
+            Reglas: no hagas force-push, no borres ramas ajenas, no toques otros workflows.
+
+      # Steps determinísticos: el video y el resultado de los tests los produce
+      # el workflow, NO el agente — así son reales y verificables.
+
+      - name: Checkout PR branch
+        run: |
+          BRANCH="feat/issue-${{ github.event.issue.number }}"
+          git fetch origin "$BRANCH"
+          git checkout "$BRANCH"
+
+      - name: Reinstall deps for PR branch
+        run: npm ci
+
+      - name: Run E2E and record video
+        id: e2e
+        env:
+          CI: "true"
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+        run: |
+          set -o pipefail
+          npm run test:e2e 2>&1 | tee e2e-output.txt
+        # Si los tests fallan, el job falla (rojo) — señal honesta de que algo
+        # quedó roto. Los steps de abajo igual corren gracias a `if: always()`.
+
+      - name: List recorded artifacts (debug)
+        if: always()
+        run: |
+          echo "=== e2e/.results ==="
+          ls -laR e2e/.results 2>/dev/null || echo "(vacío)"
+          echo "=== .webm encontrados ==="
+          find e2e/.results -name '*.webm' 2>/dev/null || echo "(ninguno)"
+
+      - name: Upload E2E video & report
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-video
+          path: |
+            e2e/.results/**
+            e2e/.report/**
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Comment test result + video link on PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR=$(gh pr list --head "feat/issue-${{ github.event.issue.number }}" --json number --jq '.[0].number')
+          if [ -z "$PR" ]; then echo "No PR found, skipping comment"; exit 0; fi
+
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          if [ "${{ steps.e2e.outcome }}" = "success" ]; then
+            STATUS="✅ **E2E en verde**"
+          else
+            STATUS="❌ **E2E en rojo** — revisa el log de la corrida"
+          fi
+          VIDEOS=$(find e2e/.results -name '*.webm' 2>/dev/null | wc -l | tr -d ' ')
+
+          ARTIFACT_ID="${{ steps.upload.outputs.artifact-id }}"
+          if [ -n "$ARTIFACT_ID" ]; then
+            VIDEO_LINK="[⬇️ Descargar video (e2e-video.zip)]($RUN_URL/artifacts/$ARTIFACT_ID)"
+          else
+            VIDEO_LINK="Artifact **e2e-video** en [esta corrida]($RUN_URL) (no se subió ningún video)"
+          fi
+
+          {
+            echo "## Reporte de tests (generado por el workflow)"
+            echo ""
+            echo "$STATUS"
+            echo ""
+            echo "- Videos \`.webm\` grabados: **$VIDEOS**"
+            echo "- $VIDEO_LINK"
+            echo ""
+            echo "_Resultado producido por un step determinístico del workflow corriendo \`npm run test:e2e\` sobre la rama del PR — no por el agente._"
+          } > pr-comment.md
+
+          gh pr comment "$PR" --body-file pr-comment.md
