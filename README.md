@@ -96,3 +96,41 @@ npx tsc --noEmit      # type check
 ---
 
 *Repo de demostración para el curso SDD Quickstart — [dominicode.com](https://dominicode.com)*
+
+---
+
+# SDD Quickstart — Descripción del producto
+
+El **SDD Quickstart** es un paquete de recursos para aprender y aplicar **Spec-Driven Development (SDD)** con Claude Code.
+
+## Qué incluye
+
+- **Masterclass grabada (60 min)** — Pantalla compartida, terminal abierta, proyecto real existente. Desde el ticket hasta el PR: exploración del codebase → spec → implementación. Sin slides, sin teoría, sin atajos.
+
+- **Spec Template Pack (6 plantillas)** — Una por patrón común: feature en brownfield, endpoint REST, componente UI, refactorización, tests en legacy y bug fix. Copia, adapta, ejecuta. No empiezas de cero.
+
+- **CLAUDE.md comentado** — El archivo de producción de Bezael anotado sección por sección. Lo adaptas al tuyo en menos de una hora; Claude trabaja como si llevara meses en tu proyecto desde el primer prompt.
+
+- **Cheatsheet Claude Code + MCPs** — Referencia rápida de comandos, atajos y patrones. PDF y Markdown.
+
+## La idea central
+
+El humano escribe la spec (el *qué*). Claude Code implementa el *cómo*.
+20 minutos de spec antes de abrir el chat, y Claude ejecuta contra algo concreto — en lugar de adivinar.
+
+```
+Sin SDD:  prompt → Claude adivina → corrección → corrección → corrección
+Con SDD:  spec → prompt único → resultado correcto en el primer intento
+```
+
+## Para quién es
+
+- Llevas semanas con Claude Code y sientes que das vueltas al mismo código.
+- Entregas features que funcionan pero el proceso te cuesta el doble de lo que debería.
+- Quieres un flujo repetible para tu próximo proyecto y los siguientes.
+
+---
+
+**[Acceder al SDD Quickstart por 7 USD →](https://dominicode.com/sdd-quickstart)**
+
+*Garantía de 7 días — si no construyes tu primera feature con el método, te devuelvo los 7 USD.*
