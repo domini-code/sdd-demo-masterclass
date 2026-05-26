@@ -1,10 +1,9 @@
 import Link from "next/link"
 import { getPosts } from "@/lib/api"
-import { PostCard } from "@/components/PostCard"
+import { SearchablePostList } from "./_components/SearchablePostList"
 
 export default async function HomePage() {
   const posts = await getPosts()
-  const featured = posts.slice(0, 3)
 
   return (
     <div>
@@ -24,11 +23,7 @@ export default async function HomePage() {
             Ver todos →
           </Link>
         </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </div>
+        <SearchablePostList posts={posts} />
       </section>
     </div>
   )
