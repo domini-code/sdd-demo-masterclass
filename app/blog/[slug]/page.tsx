@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import Image from "next/image"
 import { getPostBySlug, getPosts } from "@/lib/api"
 import { BookmarkButton } from "./_components/BookmarkButton"
+import { ReactionButton } from "@/components/ReactionButton"
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -36,6 +37,7 @@ export default async function PostPage({ params }: Props) {
             ))}
           </div>
           <BookmarkButton postId={post.id} />
+          <ReactionButton postId={post.id} />
         </div>
         <h1 className="mb-4 text-3xl font-bold leading-tight text-foreground">
           {post.title}

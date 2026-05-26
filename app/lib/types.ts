@@ -15,3 +15,8 @@ export interface User {
   name?: string
   avatarUrl?: string
 }
+
+export interface ReactionState {
+  count: number
+  userHasReacted: boolean
+}

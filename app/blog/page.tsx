@@ -1,5 +1,6 @@
 import { getPosts } from "@/lib/api"
 import { PostCard } from "@/components/PostCard"
+import { ReactionButton } from "@/components/ReactionButton"
 
 export const metadata = {
   title: "Blog — DevDiario",
@@ -17,7 +18,7 @@ export default async function BlogPage() {
       </p>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {posts.map((post) => (
-          <PostCard key={post.id} post={post} />
+          <PostCard key={post.id} post={post} action={<ReactionButton postId={post.id} />} />
         ))}
       </div>
     </div>
