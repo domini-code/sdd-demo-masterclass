@@ -197,6 +197,13 @@ jobs:
             VIDEO_LINK="Artifact **e2e-video** en [esta corrida]($RUN_URL) (no se subió ningún video)"
           fi
 
+          AGENT_COST="${{ steps.claude.outputs.cost_usd }}"
+          if [ -n "$AGENT_COST" ]; then
+            COST_LINE="- Costo del agente: **\$$AGENT_COST USD**"
+          else
+            COST_LINE=""
+          fi
+
           {
             echo "## Reporte de tests (generado por el workflow)"
             echo ""
@@ -204,6 +211,7 @@ jobs:
             echo ""
             echo "- Videos \`.webm\` grabados: **$VIDEOS**"
             echo "- $VIDEO_LINK"
+            [ -n "$COST_LINE" ] && echo "- $COST_LINE"
             echo ""
             echo "_Resultado producido por un step determinístico del workflow corriendo \`npm run test:e2e\` sobre la rama del PR — no por el agente._"
           } > pr-comment.md
