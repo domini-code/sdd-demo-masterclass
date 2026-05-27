@@ -66,7 +66,7 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           additional_permissions: |
             actions: read
-          claude_args: '--model claude-sonnet-4-5 --allowed-tools "Bash,Read,Write,Edit,Glob,Grep" --max-turns 25 --max-budget-usd 5.00 --exclude-dynamic-system-prompt-sections all'
+          claude_args: '--model claude-sonnet-4-6 --allowed-tools "Bash,Read,Write,Edit,Glob,Grep" --max-turns 25 --max-budget-usd 5.00'
           prompt: |
             Un humano te asignó este trabajo poniéndole la etiqueta "e2e" al issue
             #${{ github.event.issue.number }} ("${{ github.event.issue.title }}").
@@ -78,9 +78,10 @@ jobs:
             TypeScript strict + Tailwind CSS v4 + Supabase Auth + React Query v5.
 
             1. SPEC (metodología SDD)
-               - Lee los specs existentes en specs/ para entender la convención.
-               - Si no existe spec para este feature, crea specs/<feature-name>/spec.md,
-                 plan.md y tasks.md siguiendo la estructura de los existentes.
+               - Invoca la skill /dominicode-sdd-creator para generar el spec completo
+                 del feature (spec.md, plan.md y tasks.md) en specs/<feature-name>/.
+               - Si el directorio specs/<feature-name>/ ya existe, léelo y continúa
+                 sin sobreescribir.
 
             2. IMPLEMENTAR
                - Crea una rama nueva: feat/issue-${{ github.event.issue.number }}.
