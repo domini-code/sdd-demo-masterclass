@@ -6,3 +6,6 @@ out/
 .DS_Store
 *.tsbuildinfo
 supabase/.temp
+e2e/.results/
+e2e/.report/
+playwright-report/

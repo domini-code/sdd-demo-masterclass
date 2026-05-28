@@ -1,10 +1,8 @@
-import Link from "next/link"
 import { getPosts } from "@/lib/api"
-import { PostCard } from "@/components/PostCard"
+import { ArticleSearch } from "@/_components/ArticleSearch"
 
 export default async function HomePage() {
   const posts = await getPosts()
-  const featured = posts.slice(0, 3)
 
   return (
     <div>
@@ -17,19 +15,7 @@ export default async function HomePage() {
         </p>
       </section>
 
-      <section>
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-foreground">Últimos artículos</h2>
-          <Link href="/blog" className="text-sm text-primary hover:underline">
-            Ver todos →
-          </Link>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </div>
-      </section>
+      <ArticleSearch posts={posts} />
     </div>
   )
 }
