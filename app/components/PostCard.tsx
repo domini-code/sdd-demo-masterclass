@@ -47,7 +47,7 @@ export function PostCard({ post, className, action }: PostCardProps) {
         </p>
 
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>
+          <span suppressHydrationWarning>
             {new Date(post.publishedAt).toLocaleDateString("es-ES", {
               year: "numeric",
               month: "long",

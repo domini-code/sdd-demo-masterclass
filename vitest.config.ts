@@ -7,6 +7,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     passWithNoTests: true,
+    exclude: ["e2e/**", "node_modules/**"],
   },
   resolve: {
     alias: {
