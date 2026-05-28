@@ -86,3 +86,4 @@ Tailwind CSS v4. Dark mode via clase `dark` en `<html>`.
 - **Specs:** Planes en `specs/` como archivos `.md`.
 - **Error responses en API:** `{ error: string }` con el status HTTP correspondiente.
 - **Console logs:** Solo `console.error` para errores que deben sobrevivir en producción.
+- **Supabase env vars:** Usar `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (no `NEXT_PUBLIC_SUPABASE_ANON_KEY`). El proyecto usa el formato nuevo de Supabase.
