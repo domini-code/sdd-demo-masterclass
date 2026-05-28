@@ -9,50 +9,6 @@ import { createServerClient } from "@/lib/supabase/server"
 
 const mockUser = { id: "user-123", email: "test@test.com" }
 
-function makeSupabaseMock({
-  user = null as typeof mockUser | null,
-  countData = null as { count: number } | null,
-  userReactionData = null as { user_id: string }[] | null,
-  insertError = null as { code?: string; message?: string } | null,
-  deleteError = null as { message: string } | null,
-} = {}) {
-  const countResult = { data: countData ? [countData] : [], error: null }
-  const userReactionResult = { data: userReactionData ?? [], error: null }
-
-  let callCount = 0
-  const selectMock = vi.fn().mockImplementation(() => {
-    callCount++
-    if (callCount === 1) {
-      return {
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(countResult),
-        }),
-        single: vi.fn().mockResolvedValue(countResult),
-      }
-    }
-    return {
-      eq: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue(userReactionResult),
-      }),
-    }
-  })
-
-  const deleteEq2 = vi.fn().mockResolvedValue({ error: deleteError })
-  const deleteEq1 = vi.fn().mockReturnValue({ eq: deleteEq2 })
-  const deleteBuilder = { eq: deleteEq1 }
-
-  return {
-    auth: {
-      getUser: vi.fn().mockResolvedValue({ data: { user } }),
-    },
-    from: vi.fn().mockReturnValue({
-      select: selectMock,
-      insert: vi.fn().mockResolvedValue({ error: insertError }),
-      delete: vi.fn().mockReturnValue(deleteBuilder),
-    }),
-  }
-}
-
 describe("GET /api/reactions", () => {
   beforeEach(() => vi.clearAllMocks())
 
