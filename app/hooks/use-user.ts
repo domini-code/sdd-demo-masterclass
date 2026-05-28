@@ -16,6 +16,11 @@ export function useUser(): UseUserResult {
   useEffect(() => {
     const supabase = createClient()
 
+    if (!supabase) {
+      setIsLoading(false)
+      return
+    }
+
     supabase.auth.getUser().then(({ data: { user: supabaseUser } }) => {
       if (supabaseUser) {
         setUser({

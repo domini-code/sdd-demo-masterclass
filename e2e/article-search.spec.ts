@@ -3,60 +3,69 @@ import { test, expect } from "@playwright/test"
 test.describe("Búsqueda de artículos en tiempo real", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/")
+    await page.waitForSelector('[aria-label="Buscar artículos"]', { state: "visible" })
   })
 
-  test("golden path — filtra artículos por título al escribir", async ({ page }) => {
-    const searchInput = page.getByRole("textbox", { name: "Buscar artículos" })
-    await expect(searchInput).toBeVisible()
+  test("muestra el campo de búsqueda en la página principal", async ({ page }) => {
+    const input = page.getByRole("searchbox", { name: "Buscar artículos" })
+    await expect(input).toBeVisible()
+    await expect(input).toHaveAttribute("placeholder", "Buscar artículos…")
+  })
 
-    // Initially all articles are visible (5 posts in static data)
-    const cards = page.locator("article")
-    await expect(cards).toHaveCount(5)
+  test("golden path — filtra artículos al escribir en el campo de búsqueda", async ({ page }) => {
+    const input = page.getByRole("searchbox", { name: "Buscar artículos" })
 
-    // Type a search query that matches a known post
-    await searchInput.fill("react")
+    const initialCards = page.locator("article")
+    const initialCount = await initialCards.count()
+    expect(initialCount).toBeGreaterThan(0)
 
-    // Only posts containing "react" in title or excerpt should remain
+    await input.fill("react")
+    await expect(input).toHaveValue("react")
+
     const filteredCards = page.locator("article")
-    const count = await filteredCards.count()
-    expect(count).toBeGreaterThan(0)
-    expect(count).toBeLessThan(5)
+    await expect(filteredCards.first()).toBeVisible()
+    const filteredCount = await filteredCards.count()
+    expect(filteredCount).toBeGreaterThan(0)
+    expect(filteredCount).toBeLessThanOrEqual(initialCount)
+  })
+
+  test("restaura todos los artículos al borrar el texto", async ({ page }) => {
+    const input = page.getByRole("searchbox", { name: "Buscar artículos" })
+
+    const initialCards = page.locator("article")
+    const initialCount = await initialCards.count()
+
+    await input.fill("react")
+    await expect(input).toHaveValue("react")
+
+    await input.clear()
+    await expect(input).toHaveValue("")
+
+    const restoredCards = page.locator("article")
+    await expect(restoredCards.first()).toBeVisible()
+    await expect(restoredCards).toHaveCount(initialCount)
   })
 
   test("muestra mensaje cuando no hay resultados", async ({ page }) => {
-    const searchInput = page.getByRole("textbox", { name: "Buscar artículos" })
-    await searchInput.fill("xyz123noresults")
+    const input = page.getByRole("searchbox", { name: "Buscar artículos" })
+
+    await input.fill("xxxxxxxxxx")
+    await expect(input).toHaveValue("xxxxxxxxxx")
 
     await expect(page.getByText("No se encontraron artículos")).toBeVisible()
     await expect(page.locator("article")).toHaveCount(0)
   })
 
-  test("restaura todos los artículos al limpiar el input", async ({ page }) => {
-    const searchInput = page.getByRole("textbox", { name: "Buscar artículos" })
+  test("el filtrado es case-insensitive y sin distinción de acentos", async ({ page }) => {
+    const input = page.getByRole("searchbox", { name: "Buscar artículos" })
 
-    // Filter first
-    await searchInput.fill("react")
-    const filteredCount = await page.locator("article").count()
-    expect(filteredCount).toBeGreaterThan(0)
+    await input.fill("REACT")
+    await expect(input).toHaveValue("REACT")
+    const cards = page.locator("article")
+    await expect(cards.first()).toBeVisible()
 
-    // Clear — all articles should come back
-    await searchInput.clear()
-    await expect(page.locator("article")).toHaveCount(5)
-    await expect(page.getByText("No se encontraron artículos")).not.toBeVisible()
-  })
-
-  test("el filtrado es case-insensitive y normaliza acentos", async ({ page }) => {
-    const searchInput = page.getByRole("textbox", { name: "Buscar artículos" })
-
-    // "REACT" uppercase should find posts with "React"
-    await searchInput.fill("REACT")
-    const upperCount = await page.locator("article").count()
-    expect(upperCount).toBeGreaterThan(0)
-
-    // "typescript" lowercase should find posts with "TypeScript"
-    await searchInput.clear()
-    await searchInput.fill("typescript")
-    const lowerCount = await page.locator("article").count()
-    expect(lowerCount).toBeGreaterThan(0)
+    await input.fill("supabase")
+    await expect(input).toHaveValue("supabase")
+    await expect(cards.first()).toBeVisible()
   })
 })

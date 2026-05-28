@@ -15,12 +15,7 @@ export default async function HomePage() {
         </p>
       </section>
 
-      <section>
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-foreground">Últimos artículos</h2>
-        </div>
-        <ArticleSearch posts={posts} />
-      </section>
+      <ArticleSearch posts={posts} />
     </div>
   )
 }
